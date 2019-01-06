@@ -1,9 +1,7 @@
 // Copyright (C) 2017 Alaa Masoud
 // See the LICENSE file in the project root for more information.
 
-using Serilog.Events;
 using Serilog.Core;
-using System.IO;
 
 namespace Sejil.Configuration.Internal
 {
@@ -22,6 +20,11 @@ namespace Sejil.Configuration.Internal
         /// Gets or sets the authentication scheme, used for the index page. Leave empty for no authentication.
         /// </summary>
         string AuthenticationScheme { get; set; }
+
+        /// <summary>
+        /// Gets or sets the name of the policy that have to be matched from the logged in user.
+        /// </summary>
+        string RequiredPolicy { get; set; }
 #endif
     }
 }

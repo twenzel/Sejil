@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 #if NETSTANDARD2_0
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authorization;
 #endif
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
@@ -17,31 +18,50 @@ namespace Sejil.Routing.Internal
 {
     public class SejilController : ISejilController
     {
-        private static JsonSerializerSettings _camelCaseSerializerSetting =
+        private static readonly JsonSerializerSettings _camelCaseSerializerSetting =
             new JsonSerializerSettings { ContractResolver = new CamelCasePropertyNamesContractResolver() };
 
         private readonly ISejilRepository _repository;
         private readonly ISejilSettings _settings;
-        private HttpContext _context { get; set; }
+        private HttpContext _context { get; }
+#if NETSTANDARD2_0
+        private IAuthorizationService _authorizationService;
 
+        public SejilController(IHttpContextAccessor contextAccessor, ISejilRepository repository, ISejilSettings settings, IAuthorizationService authorizationService)
+        {
+            _context = contextAccessor.HttpContext;
+            _repository = repository ?? throw new ArgumentNullException(nameof(repository));
+            _settings = settings ?? throw new ArgumentNullException(nameof(settings));
+            _authorizationService = authorizationService ?? throw new ArgumentNullException(nameof(authorizationService));
+        }
+#else
         public SejilController(IHttpContextAccessor contextAccessor, ISejilRepository repository, ISejilSettings settings)
         {
             _context = contextAccessor.HttpContext;
             _repository = repository;
             _settings = settings;
         }
+#endif        
 
         public async Task GetIndexAsync()
         {
 #if NETSTANDARD2_0
+            // log in user
             if (!string.IsNullOrWhiteSpace(_settings.AuthenticationScheme) && !_context.User.Identity.IsAuthenticated)
             {
                 await _context.ChallengeAsync(_settings.AuthenticationScheme);
             }
             else
             {
-                _context.Response.ContentType = "text/html";
-                await _context.Response.WriteAsync(_settings.SejilAppHtml);
+                if (!await IsAllowedToViewLogs())
+                {
+                    _context.Response.StatusCode = 403; // Forbidden
+                    _context.Response.ContentType = "text/plain";
+                    await _context.Response.WriteAsync("You don't have permission to access this resource.");
+                } else {
+                    _context.Response.ContentType = "text/html";
+                    await _context.Response.WriteAsync(_settings.SejilAppHtml);
+                }
             }
 #else
             _context.Response.ContentType = "text/html";
@@ -109,5 +129,19 @@ namespace Sejil.Routing.Internal
         {
             await _repository.DeleteQueryAsync(queryName);
         }
+
+#if NETSTANDARD2_0
+        private async Task<bool> IsAllowedToViewLogs()
+        {           
+            if (string.IsNullOrWhiteSpace(_settings.RequiredPolicy))
+            {
+                return true;
+            } else {
+                var result = await _authorizationService.AuthorizeAsync(_context.User, this, _settings.RequiredPolicy);
+
+                return result.Succeeded;
+            }
+        }        
+#endif
     }
 }

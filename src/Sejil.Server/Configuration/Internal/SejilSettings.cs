@@ -27,6 +27,11 @@ namespace Sejil.Configuration.Internal
         /// Gets or sets the authentication scheme, used for the index page. Leave empty for no authentication.
         /// </summary>
         public string AuthenticationScheme { get; set; }
+
+        /// <summary>
+        /// Gets or sets the name of the policy that have to be matched from the logged in user.
+        /// </summary>
+        public string RequiredPolicy { get; set; }
 #endif
 
         public SejilSettings(string uri, LogEventLevel minLogLevel)

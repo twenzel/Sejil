@@ -27,6 +27,13 @@ namespace sample
         {
             services.AddMvc();
 
+            services.AddAuthorization(options =>
+            {
+                options.AddPolicy(
+                    "CanViewLogs",
+                    policyBuilder => policyBuilder.RequireAuthenticatedUser().RequireRole("logviewer"));
+            });
+
             services.AddAuthentication(options =>
             {
                 options.DefaultAuthenticateScheme = CookieAuthenticationDefaults.AuthenticationScheme;
@@ -46,11 +53,15 @@ namespace sample
                     NameClaimType = "name",
                     RoleClaimType = "role"
                 };
+
+                options.SaveTokens = true;
+                options.GetClaimsFromUserInfoEndpoint = true;
             });
 
             services.ConfigureSejil(options =>
             {
                 options.AuthenticationScheme = OpenIdConnectDefaults.AuthenticationScheme;
+                options.RequiredPolicy = "CanViewLogs";
             });
         }
 

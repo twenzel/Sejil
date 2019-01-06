@@ -7,6 +7,7 @@ using System.IO;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Moq;
 using Newtonsoft.Json;
@@ -32,7 +33,7 @@ namespace Sejil.Test.Routing
             var settingsMoq = new Mock<ISejilSettings>();
             settingsMoq.SetupGet(p => p.SejilAppHtml).Returns(appHtml).Verifiable();
             var (contextMoq, responseMoq, bodyMoq) = CreateContextMoq();
-            var controller = CreateController(contextMoq.Object, Mock.Of<ISejilRepository>(), settingsMoq.Object);
+            var controller = CreateController(contextMoq.Object, Mock.Of<ISejilRepository>(), settingsMoq.Object, Mock.Of<IAuthorizationService>());
 
             // Act
             await controller.GetIndexAsync();
@@ -52,7 +53,7 @@ namespace Sejil.Test.Routing
             var startingTimestamp = DateTime.Now;
 
             var repositoryMoq = new Mock<ISejilRepository>();
-            var controller = CreateController(CreateContextMoq().contextMoq.Object, repositoryMoq.Object, Mock.Of<ISejilSettings>());
+            var controller = CreateController(CreateContextMoq().contextMoq.Object, repositoryMoq.Object, Mock.Of<ISejilSettings>(), Mock.Of<IAuthorizationService>());
 
             // Act
             await controller.GetEventsAsync(page, startingTimestamp, new LogQueryFilter());
@@ -69,7 +70,7 @@ namespace Sejil.Test.Routing
             var startingTimestamp = DateTime.Now;
 
             var repositoryMoq = new Mock<ISejilRepository>();
-            var controller = CreateController(CreateContextMoq().contextMoq.Object, repositoryMoq.Object, Mock.Of<ISejilSettings>());
+            var controller = CreateController(CreateContextMoq().contextMoq.Object, repositoryMoq.Object, Mock.Of<ISejilSettings>(), Mock.Of<IAuthorizationService>());
 
             // Act
             await controller.GetEventsAsync(page, startingTimestamp, new LogQueryFilter());
@@ -89,7 +90,7 @@ namespace Sejil.Test.Routing
                 DateRangeFilter = new List<DateTime>() { DateTime.Now, DateTime.Now }
             };
             var repositoryMoq = new Mock<ISejilRepository>();
-            var controller = CreateController(CreateContextMoq().contextMoq.Object, repositoryMoq.Object, Mock.Of<ISejilSettings>());
+            var controller = CreateController(CreateContextMoq().contextMoq.Object, repositoryMoq.Object, Mock.Of<ISejilSettings>(), Mock.Of<IAuthorizationService>());
 
             // Act
             await controller.GetEventsAsync(1, null, qf);
@@ -106,7 +107,7 @@ namespace Sejil.Test.Routing
             var repositoryMoq = new Mock<ISejilRepository>();
             repositoryMoq.Setup(p => p.GetEventsPageAsync(1, null, null)).ReturnsAsync(logEntries);
             var (contextMoq, responseMoq, bodyMoq) = CreateContextMoq();
-            var controller = CreateController(contextMoq.Object, repositoryMoq.Object, Mock.Of<ISejilSettings>());
+            var controller = CreateController(contextMoq.Object, repositoryMoq.Object, Mock.Of<ISejilSettings>(), Mock.Of<IAuthorizationService>());
 
             // Act
             await controller.GetEventsAsync(1, null, null);
@@ -127,7 +128,7 @@ namespace Sejil.Test.Routing
                 Query = "query"
             };
             var repositoryMoq = new Mock<ISejilRepository>();
-            var controller = CreateController(CreateContextMoq().contextMoq.Object, repositoryMoq.Object, Mock.Of<ISejilSettings>());
+            var controller = CreateController(CreateContextMoq().contextMoq.Object, repositoryMoq.Object, Mock.Of<ISejilSettings>(), Mock.Of<IAuthorizationService>());
 
             // Act
             await controller.SaveQueryAsync(logQuery);
@@ -145,7 +146,7 @@ namespace Sejil.Test.Routing
             var repositoryMoq = new Mock<ISejilRepository>();
             repositoryMoq.Setup(p => p.SaveQueryAsync(It.IsAny<LogQuery>())).ReturnsAsync(saveOperationResult);
             var (contextMoq, responseMoq, _) = CreateContextMoq();
-            var controller = CreateController(contextMoq.Object, repositoryMoq.Object, Mock.Of<ISejilSettings>());
+            var controller = CreateController(contextMoq.Object, repositoryMoq.Object, Mock.Of<ISejilSettings>(), Mock.Of<IAuthorizationService>());
 
             // Act
             await controller.SaveQueryAsync(new LogQuery());
@@ -159,7 +160,7 @@ namespace Sejil.Test.Routing
         {
             // Arrange
             var repositoryMoq = new Mock<ISejilRepository>();
-            var controller = CreateController(CreateContextMoq().contextMoq.Object, repositoryMoq.Object, Mock.Of<ISejilSettings>());
+            var controller = CreateController(CreateContextMoq().contextMoq.Object, repositoryMoq.Object, Mock.Of<ISejilSettings>(), Mock.Of<IAuthorizationService>());
 
             // Act
             await controller.GetQueriesAsync();
@@ -176,7 +177,7 @@ namespace Sejil.Test.Routing
             var repositoryMoq = new Mock<ISejilRepository>();
             repositoryMoq.Setup(p => p.GetSavedQueriesAsync()).ReturnsAsync(logQueries);
             var (contextMoq, responseMoq, bodyMoq) = CreateContextMoq();
-            var controller = CreateController(contextMoq.Object, repositoryMoq.Object, Mock.Of<ISejilSettings>());
+            var controller = CreateController(contextMoq.Object, repositoryMoq.Object, Mock.Of<ISejilSettings>(), Mock.Of<IAuthorizationService>());
 
             // Act
             await controller.GetQueriesAsync();
@@ -194,7 +195,7 @@ namespace Sejil.Test.Routing
             var levelSwitch = new LoggingLevelSwitch(LogEventLevel.Debug);
             var settingsMoq = new Mock<ISejilSettings>();
             settingsMoq.SetupGet(p => p.LoggingLevelSwitch).Returns(levelSwitch);
-            var controller = CreateController(CreateContextMoq().contextMoq.Object, Mock.Of<ISejilRepository>(), settingsMoq.Object);
+            var controller = CreateController(CreateContextMoq().contextMoq.Object, Mock.Of<ISejilRepository>(), settingsMoq.Object, Mock.Of<IAuthorizationService>());
 
             // Act
             await controller.GetMinimumLogLevelAsync();
@@ -218,7 +219,7 @@ namespace Sejil.Test.Routing
 
 
             var (contextMoq, responseMoq, bodyMoq) = CreateContextMoq();
-            var controller = CreateController(contextMoq.Object, Mock.Of<ISejilRepository>(), settingsMoq.Object);
+            var controller = CreateController(contextMoq.Object, Mock.Of<ISejilRepository>(), settingsMoq.Object, Mock.Of<IAuthorizationService>());
 
             // Act
             await controller.GetMinimumLogLevelAsync();
@@ -235,7 +236,7 @@ namespace Sejil.Test.Routing
             // Arrange
             var logLevel = "info";
             var settingsMoq = new Mock<ISejilSettings>();
-            var controller = CreateController(CreateContextMoq().contextMoq.Object, Mock.Of<ISejilRepository>(), settingsMoq.Object);
+            var controller = CreateController(CreateContextMoq().contextMoq.Object, Mock.Of<ISejilRepository>(), settingsMoq.Object, Mock.Of<IAuthorizationService>());
 
             // Act
             controller.SetMinimumLogLevel(logLevel);
@@ -253,7 +254,7 @@ namespace Sejil.Test.Routing
             var settingsMoq = new Mock<ISejilSettings>();
             settingsMoq.Setup(p => p.TrySetMinimumLogLevel(It.IsAny<string>())).Returns(saveOperationResult);
             var (contextMoq, responseMoq, _) = CreateContextMoq();
-            var controller = CreateController(contextMoq.Object, Mock.Of<ISejilRepository>(), settingsMoq.Object);
+            var controller = CreateController(contextMoq.Object, Mock.Of<ISejilRepository>(), settingsMoq.Object, Mock.Of<IAuthorizationService>());
 
             // Act
             controller.SetMinimumLogLevel("info");
@@ -268,7 +269,7 @@ namespace Sejil.Test.Routing
             // Arrange
             var queryName = "query";
             var repositoryMoq = new Mock<ISejilRepository>();
-            var controller = CreateController(CreateContextMoq().contextMoq.Object, repositoryMoq.Object, Mock.Of<ISejilSettings>());
+            var controller = CreateController(CreateContextMoq().contextMoq.Object, repositoryMoq.Object, Mock.Of<ISejilSettings>(), Mock.Of<IAuthorizationService>());
 
             // Act
             await controller.DeleteQueryAsync(queryName);
@@ -277,8 +278,8 @@ namespace Sejil.Test.Routing
             repositoryMoq.Verify(p => p.DeleteQueryAsync(queryName), Times.Once);
         }
 
-        private ISejilController CreateController(HttpContext context, ISejilRepository repository, ISejilSettings settings)
-            => new SejilController(new HttpContextAccessor { HttpContext = context }, repository, settings);
+        private ISejilController CreateController(HttpContext context, ISejilRepository repository, ISejilSettings settings, IAuthorizationService authorizationService)
+            => new SejilController(new HttpContextAccessor { HttpContext = context }, repository, settings, authorizationService);
 
         private (IEnumerable<LogEntry> logEntries, string logEntriesJson) GetTestLogEntries()
         {
